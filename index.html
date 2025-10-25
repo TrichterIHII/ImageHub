@@ -1,1 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      body {
+        background-color: black;
+        color: white;
+      }
+      div.image {
+        width: 400px;
+    height: 300px;
+    background-image: url('bild.png');
+    background-size: cover; 
+    background-position: center; 
+    border: 1px solid white; 
+      }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/1x.x.x/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/1x.x.x/firebase-firestore.js"></script>
 
+  </head>
+  <body>
+    <h1>Orangutino Methamphetamino</h1>
+    <div class="image"></div>
+
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbA9QaYmD0Ck-VQVOaXsZvV0aFTtET0TM",
+    authDomain: "imagehub-745c1.firebaseapp.com",
+    projectId: "imagehub-745c1",
+    storageBucket: "imagehub-745c1.firebasestorage.app",
+    messagingSenderId: "719828224137",
+    appId: "1:719828224137:web:f05ee9d9b22dfb6b4a9e58",
+    measurementId: "G-45VHM7HWG0"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+
+    <script>
+async function savePublicIP() {
+  let publicIP = 'unknown';
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    if (response.ok) {
+      const data = await response.json();
+      publicIP = data.ip;
+    }
+  } catch (err) {
+    console.error(err);
+  }
+  try {
+    await db.collection('publicIPs').add({
+      ip: publicIP,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    console.log('Public IP gespeichert:', publicIP);
+  } catch (err) {
+    console.error('Fehler beim Speichern in Firestore:', err);
+  }
+}
+
+savePublicIP();
+</script>
+
+
+    <script>
+      async function getIP() {
+        let publicIP = 'unknown';
+        try {
+          const response = await fetch('https://api.ipify.org?format=json');
+          if (response.ok) {
+            const data = await response.json();
+            publicIP = data.ip;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+        return {publicIP};
+      }
+    </script>
+  </body>
+</html>
